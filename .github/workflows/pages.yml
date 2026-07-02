@@ -1,0 +1,55 @@
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Copy docs to a staging dir and inject the production API URL there so
+      # the repo working tree is never mutated.
+      - name: Stage site with production API URL
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          STAGE="$RUNNER_TEMP/site"
+          mkdir -p "$STAGE"
+          cp -r docs/. "$STAGE/"
+          if [ -n "$API_BASE_URL" ]; then
+            sed -i "s|PLACEHOLDER_PROD_API|$API_BASE_URL|g" "$STAGE/js/config.js"
+            echo "Injected API_BASE_URL into js/config.js: $API_BASE_URL"
+          else
+            echo "::warning::Repo variable API_BASE_URL is not set; PLACEHOLDER_PROD_API left in js/config.js."
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

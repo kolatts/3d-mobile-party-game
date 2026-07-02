@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "telesculpt-frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "docs", "-p", "8090", "-c-1"],
+      "port": 8090
+    }
+  ]
+}

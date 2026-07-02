@@ -1,0 +1,8 @@
+.git*
+.vscode
+local.settings.json
+local.settings.json.sample
+test
+scripts
+.azurite
+README.md

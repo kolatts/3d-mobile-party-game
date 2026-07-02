@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#150f2b">
+  <title>TeleSculpt — 3D Voxel Telephone</title>
+  <meta name="description" content="Doodle telephone, but the drawings are 3D voxel sculptures. A mobile party game.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 60 20 32 36 4 20Z' fill='%23e9c46a'/%3E%3Cpath d='M4 20l28 16v24L4 44Z' fill='%23e63946'/%3E%3Cpath d='M60 20 32 36v24l28-16Z' fill='%232a9d8f'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ================= HOME ================= -->
+  <section id="screen-home" class="screen">
+    <div class="screen-inner center-col">
+      <div class="logo">
+        <svg class="logo-cube" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 4 60 20 32 36 4 20Z" fill="#e9c46a"/>
+          <path d="M4 20l28 16v24L4 44Z" fill="#e63946"/>
+          <path d="M60 20 32 36v24l28-16Z" fill="#2a9d8f"/>
+        </svg>
+        <h1 class="logo-title">Tele<span>Sculpt</span></h1>
+        <p class="tagline">Telephone, but the drawings are 3D sculptures.</p>
+      </div>
+
+      <div class="card">
+        <label class="field-label" for="home-name">Your name</label>
+        <input id="home-name" class="input" type="text" maxlength="16" placeholder="e.g. Sunny"
+               autocomplete="off" autocapitalize="words" enterkeyhint="go">
+        <button id="btn-create" class="btn btn-primary btn-big">Create room</button>
+        <div class="divider"><span>or join a game</span></div>
+        <label class="field-label" for="home-code">Room code</label>
+        <input id="home-code" class="input input-code" type="text" maxlength="4" placeholder="ABCD"
+               autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go">
+        <button id="btn-join" class="btn btn-secondary btn-big">Join</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOBBY ================= -->
+  <section id="screen-lobby" class="screen">
+    <div class="screen-inner center-col">
+      <p class="eyebrow">Room code</p>
+      <div id="lobby-code" class="room-code">····</div>
+      <button id="btn-share" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+        Share invite link
+      </button>
+
+      <div class="card card-wide">
+        <h2 class="card-title">Players</h2>
+        <ul id="lobby-players" class="player-list"></ul>
+      </div>
+
+      <button id="btn-start" class="btn btn-primary btn-big hidden" disabled>Start game</button>
+      <p id="lobby-waiting-msg" class="muted hidden">Waiting for the host to start…</p>
+    </div>
+  </section>
+
+  <!-- ================= WRITE ================= -->
+  <section id="screen-write" class="screen">
+    <div class="screen-inner center-col">
+      <div class="timer-pill" id="write-timer">0:45</div>
+      <h2 class="prompt-heading">Write something weird to sculpt…</h2>
+      <div class="card card-wide">
+        <input id="write-input" class="input input-lg" type="text" maxlength="60"
+               placeholder="a cat playing bagpipes" autocomplete="off" enterkeyhint="send">
+        <div class="char-count" id="write-count">0/60</div>
+        <button id="btn-write-submit" class="btn btn-primary btn-big">Send it</button>
+      </div>
+      <p class="muted small">Someone else has to sculpt this. Be kind. Or don’t.</p>
+    </div>
+  </section>
+
+  <!-- ================= SCULPT ================= -->
+  <section id="screen-sculpt" class="screen screen-full">
+    <div id="sculpt-canvas" class="canvas-host"></div>
+    <header class="sculpt-header">
+      <div class="sculpt-prompt-wrap">
+        <span class="eyebrow">Sculpt this</span>
+        <div id="sculpt-prompt" class="sculpt-prompt">…</div>
+      </div>
+      <div class="timer-pill" id="sculpt-timer">2:00</div>
+    </header>
+    <footer class="sculpt-toolbar">
+      <div id="sculpt-palette" class="palette-row" role="radiogroup" aria-label="Voxel color"></div>
+      <div class="tool-row">
+        <div class="mode-group" role="radiogroup" aria-label="Tool mode">
+          <button id="mode-build" class="btn tool-btn active" aria-label="Build mode">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Build</span>
+          </button>
+          <button id="mode-erase" class="btn tool-btn" aria-label="Erase mode">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg>
+            <span>Erase</span>
+          </button>
+          <button id="mode-rotate" class="btn tool-btn" aria-label="Rotate mode">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>
+            <span>Rotate</span>
+          </button>
+        </div>
+        <button id="btn-undo" class="btn tool-btn" disabled aria-label="Undo">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+          <span>Undo</span>
+        </button>
+        <div class="voxel-count"><span id="sculpt-count">0</span> voxels</div>
+        <button id="btn-sculpt-submit" class="btn btn-primary">Done</button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ================= GUESS ================= -->
+  <section id="screen-guess" class="screen screen-full">
+    <div id="guess-viewer" class="canvas-host"></div>
+    <header class="sculpt-header">
+      <div class="sculpt-prompt-wrap">
+        <span class="eyebrow">Someone sculpted this…</span>
+        <div class="sculpt-prompt">What is it?</div>
+      </div>
+      <div class="timer-pill" id="guess-timer">0:45</div>
+    </header>
+    <footer class="guess-bar">
+      <input id="guess-input" class="input" type="text" maxlength="60"
+             placeholder="What is this?" autocomplete="off" enterkeyhint="send">
+      <button id="btn-guess-submit" class="btn btn-primary">Guess</button>
+    </footer>
+  </section>
+
+  <!-- ================= WAITING ================= -->
+  <section id="screen-waiting" class="screen">
+    <div class="screen-inner center-col">
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="waiting-status" class="prompt-heading">Waiting for the others…</h2>
+      <div class="card card-wide">
+        <h2 class="card-title">Who’s done</h2>
+        <ul id="waiting-players" class="player-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REVEAL ================= -->
+  <section id="screen-reveal" class="screen screen-full">
+    <div id="reveal-viewer-wrap" class="canvas-host hidden">
+      <div id="reveal-viewer" class="canvas-host"></div>
+      <div id="reveal-sculptor" class="reveal-sculptor"></div>
+    </div>
+    <header class="sculpt-header">
+      <div class="sculpt-prompt-wrap">
+        <span class="eyebrow">The reveal</span>
+        <div id="reveal-progress" class="sculpt-prompt">Chain 1 of 1</div>
+      </div>
+    </header>
+    <div id="reveal-cards" class="reveal-cards"></div>
+    <div id="reveal-final" class="reveal-final hidden">
+      <div class="card center-col">
+        <div class="final-emoji">🏆</div>
+        <h2 class="card-title">What a journey.</h2>
+        <p class="muted">Thanks for playing TeleSculpt.</p>
+        <button id="btn-play-again" class="btn btn-primary btn-big">Play again</button>
+      </div>
+    </div>
+    <footer class="reveal-controls">
+      <button id="btn-reveal-next" class="btn btn-primary btn-big">Next</button>
+    </footer>
+  </section>
+
+  <!-- overlays -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

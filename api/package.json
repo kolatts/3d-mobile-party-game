@@ -1,0 +1,23 @@
+{
+  "name": "telesculpt-api",
+  "version": "1.0.0",
+  "description": "TeleSculpt backend - Azure Functions v4 (Node.js programming model v4)",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "setup-local": "node scripts/setup-local.js",
+    "azurite": "azurite --silent --location .azurite",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@azure/functions": "^4.7.0",
+    "@azure/storage-blob": "12.27.0"
+  },
+  "devDependencies": {
+    "azurite": "^3.34.0"
+  }
+}

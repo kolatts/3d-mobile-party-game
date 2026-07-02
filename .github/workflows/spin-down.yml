@@ -1,0 +1,30 @@
+name: Spin Down
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DELETE to confirm destroying ALL TeleSculpt Azure resources"
+        required: true
+
+jobs:
+  teardown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify confirmation
+        if: ${{ inputs.confirm != 'DELETE' }}
+        run: |
+          echo "::error::Confirmation failed. You must type exactly DELETE to run spin-down."
+          exit 1
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Tear down Azure resources
+        shell: pwsh
+        run: ./infra/teardown.ps1 -Confirm DELETE
