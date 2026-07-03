@@ -1,6 +1,6 @@
 # TeleSculpt — 3D Voxel Telephone
 
-**Play it: https://kolatts.github.io/3d-mobile-party-game/**
+**Play it: https://kolatts.github.io/telesculpt/**
 
 Telephone, but the drawings are 3D sculptures. One player writes a phrase, the next
 sculpts it in voxel clay on their phone, the next guesses what the sculpture is, and
